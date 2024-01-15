@@ -1,0 +1,831 @@
+\documentclass[letterpaper,twocolumn,notitlepage]{article}
+\usepackage{%
+  amssymb,
+  amsmath,
+  fullpage,
+  indentfirst,
+  mathrsfs,
+  empheq,
+  mathtools,
+  enumerate,
+  amsthm,
+  thmtools,
+  mdframed,
+  enumitem,
+  sectsty,
+  setspace,
+  times
+}
+\usepackage[compact]{titlesec}
+\usepackage[titles]{tocloft}
+\usepackage[margin=0.5in]{geometry}
+\usepackage[english]{babel}
+
+\setlength{\parindent}{0in}
+\pagestyle{empty}
+\setlength\cftparskip{-3pt}
+\setlength\cftbeforesecskip{0pt}
+%\setlength\cftaftertoctitleskip{0pt}
+%\setlength\cftXindent{0.2in}
+\cftsetindents{figure}{0em}{1.5em}
+\makeatletter
+\renewcommand{\@dotsep}{4.5}
+\renewcommand{\cftdotsep}{4.5}
+\renewcommand{\cftsecdotsep}{4.5}
+\renewcommand{\@tocrmarg}{4.55em}
+\makeatother
+\renewcommand\cftsecfont{\normalfont}
+\renewcommand\cftsecpagefont{\normalfont}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftsecdotsep}}
+%\renewcommand\cftsecdotsep{\cftdot}
+%\renewcommand\cftsubsecdotsep{\cftdot}
+
+\newcounter{cookbookcounter}
+\newenvironment{cookbook}
+{%
+\begin{mdframed}[
+  linecolor=black,%
+  leftmargin =0cm,
+  rightmargin=0cm,
+  %usetwoside=false,
+  innerleftmargin=-0.5cm,
+  innerrightmargin=-0.5cm,
+  outermargin=1cm
+]
+\begin{quote}
+\refstepcounter{cookbookcounter}
+%\textbf{Example}
+}{%
+\end{quote}
+\end{mdframed}
+}
+
+%\setlist[2]{noitemsep} % sets the itemsep and parsep for all level two lists to 0
+\setenumerate{noitemsep}
+\setitemize{noitemsep}
+
+\makeatletter
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+{-2.5ex \@plus-0.2ex \@minus-.2ex}%
+{0.5ex \@plus0.2ex}%
+{\fontsize{11pt}{11pt}\selectfont\bfseries\sffamily}}
+\makeatother
+
+\makeatletter
+\renewcommand\subsection{\@startsection{subsection}{1}{\z@}%
+{-2.5ex \@plus-0.2ex \@minus-.2ex}%
+{0.5ex \@plus0.2ex}%
+{\fontsize{9pt}{9pt}\selectfont\bfseries\sffamily}}
+\makeatother
+
+\makeatletter
+\renewcommand\subsubsection{\@startsection{subsubsection}{1}{\z@}%
+{-2.5ex \@plus-0.2ex \@minus-.2ex}%
+{0.5ex \@plus0.2ex}%
+{\fontsize{9pt}{9pt}\selectfont\bfseries}}
+\makeatother
+
+\setlength{\belowcaptionskip}{-20pt}
+
+\pagestyle{myheadings}
+\markboth{\hfill Dynamics Note Sheet \hfill Daniel Wiese}{Daniel Wiese \hfill\hspace{0.9in} Optimal Control Note Sheet \hfill}
+\setlength{\headsep}{12pt}
+\setlength{\voffset}{-12pt}
+
+\def\smallint{\begingroup\textstyle\int\endgroup}
+
+\begin{document}
+
+  \fontsize{10pt}{10pt}\selectfont
+  \abovedisplayskip=4pt plus 1pt minus 1pt
+  \belowdisplayskip=4pt plus 1pt minus 1pt
+  \belowdisplayshortskip=4pt plus 1pt minus 1pt
+
+  \section*{Optimal Control}
+
+  Control problem stated in terms of finding the control input for a given system which minimizes some \textbf{objective function} $J$.
+
+  Function minimization
+  \begin{itemize}
+    \item{Unconstrained}
+    \item{Constrained}
+    \begin{itemize}
+      \item{Equality constraints}
+      \item{Inequality constraints}
+    \end{itemize}
+  \end{itemize}
+
+  Expand function using Taylor series
+  \begin{equation*}
+    f(x+\Delta x)=f(x)+g^{\top}(x)\Delta x+\frac{1}{2}\Delta x^{\top}H(x)\Delta x+\dots
+  \end{equation*}
+
+  Want to find a minimum.
+
+  \subsection*{Optimal Control Problem}
+
+  The problem statement is
+  \begin{empheq}[]{alignat*=3}
+    &\text{Minimize}\quad &J&=h+\int_{t}^{t_{f}}gdt \\
+    &\text{subject to}&\dot{x}&=f
+  \end{empheq}
+
+  Ways to solve
+  \begin{itemize}
+    \item{Direct transcription}
+    \item{Variational approach}
+    \item{Dynamic programming}
+    \begin{itemize}
+      \item{DP problems usually have to be solved numerically}
+      \item{Basic recursion of DP basically says to start at the end of time and work backwards, at each step minimizing the cost just to get you to the prior step}
+      \item{Considering infinite horizon LQR (discrete first) the result is the Algebraic Riccati Equation and a constant static gain feedback control law}
+      \item{DP in continuous time}
+    \end{itemize}
+  \end{itemize}
+
+  Principle of optimality\textemdash{}every sub-trajectory of an optimal trajectory is optimal.
+
+  \section*{Dynamic Programming}
+
+  \subsection*{Continuous Time}
+
+  Start with same problem statement, break limits of integration into two intervals, from $t$ to $t+\Delta t$ and then from $t+\Delta t$ to $t_{f}$.
+  Use principle of optimality and express optimal cost as the cost to get from $t$ to $t+\Delta t$ and the cost-to-go to get from $t+\Delta t$ to $t_{f}$.
+  Expand the cost-to-go using a Taylor series expansion, and approximate the over the integration interval $\Delta t$ by assuming $\Delta t$ is small.
+  After some algebra, the result is a PDE known as the Hamilton-Jacobi-Bellman (HJB) equation.
+  We simplify the notation in the HJB equation by defining the Hamiltonian.
+
+  \begin{equation*}
+    -J_{t}^{*}=\min_{u}\mathcal{H}
+  \end{equation*}
+
+  \begin{equation*}
+    \mathcal{H}=g+J_{x}^{*}f
+  \end{equation*}
+
+  \subsubsection*{LQR Using Dynamic Programming}
+
+  Use the HJB equation.
+  Write out the Hamiltonian and minimize with respect to $u$ to find $u^{*}$.
+  Propose a form for $J^{*}$ plugging in $u^{*}$ to derive differential Riccati equation.
+
+  \section*{Variational Approach}
+
+  Augment cost function with a Lagrange multiplier to enforce system dynamics.
+  This Lagrange multiplier must be time varying, and we call the Lagrange multiplier the costate $p$.
+  When we calculate the first variation and set to zero, a condition comes out specifying $\dot{p}$.
+  Combining this differential equation with the one for the system dynamics we get a system of differential equations in $x$ and $p$, expressed with the Hamiltonian matrix $\bar{H}$.
+  To solve, we guess a form of the solution $p$ and check that it works.
+  The result is the Riccati differential equation.
+  For infinite time, this differential equation reaches steady-state and becomes an algebraic equation.
+  We can solve it to obtain the optimal control law, and thus the closed-loop system poles.
+  We see that these are the poles (positive and negative) of $\bar{H}$ by doing a similarity transform on $\bar{H}$.
+
+  \begin{cookbook}
+
+    \textbf{Variational Approach to Optimal Control}
+
+    \begin{empheq}[]{alignat*=3}
+      &\text{Minimize}\quad &J&=h+\smallint_{t}^{t_{f}}gdt \\
+      &\text{subject to}&\dot{x}&=f
+    \end{empheq}
+
+    \begin{empheq}[box=\fbox]{alignat*=3}
+      &\mbox{\textbf{Hamiltonian:}} & \hspace{0.5in} \mathcal{H}&=g+p^{\top}f \\
+      &\mbox{\textbf{Necessary Conditions:}} & \dot{x}&=\mathcal{H}_{p}^{\top}=f \\
+      & & \dot{p}&=-\mathcal{H}_{x}^{\top} \\
+      & & \mathcal{H}_{u}&=0
+    \end{empheq}
+
+    \begin{enumerate}
+      \item{Write out Hamiltonian $\mathcal{H}$}
+      \item{Evaluate $\mathcal{H}_{u}$ and $\mathcal{H}_{x}$ to get costate equation and $u^{*}$}
+      \item{Can put state and costate equations into matrix form and solve eigenvalue problem using the Hamiltonian matrix $\bar{\mathcal{H}}$. Solution is:}
+      \begin{equation*}
+        \begin{bmatrix}
+          x(t) \\
+          p(t)
+        \end{bmatrix}=
+        v_{1}\alpha_{1}e^{\lambda_{1}t}+v_{2}\alpha_{2}e^{\lambda_{2}t}
+      \end{equation*}
+      \item{Or can propose a solution $p=Px$ to get Riccati equation}
+      \item{If $t_{f}=\infty$ then $\dot{P}=0$ in the Riccati equation}
+    \end{enumerate}
+
+    For LQR problem the Hamiltonian is
+    \begin{equation*}
+      \mathcal{H}=\frac{1}{2}(x^{\top}R_{xx}x+u^{\top}R_{uu}u)+p^{\top}(Ax+Bu)
+    \end{equation*}
+    evaluate $\mathcal{H}_{x}$ and $\mathcal{H}_{u}$ we get
+    \begin{equation*}
+      \begin{split}
+        \mathcal{H}_{x}&=x^{\top}R_{xx}+p^{\top}A \\
+        \mathcal{H}_{u}&=u^{\top}R_{uu}+p^{\top}B
+      \end{split}
+    \end{equation*}
+    Plugging in
+    \begin{equation*}
+      \begin{split}
+        \dot{p}&=-R_{xx}x-A^{\top}p \\
+        0&=R_{uu}u+B^{\top}p
+      \end{split}
+    \end{equation*}
+    Solving the second condition for $u^{*}$
+    \begin{equation*}
+    u^{*}=-R_{uu}^{-1}B^{\top}p
+    \end{equation*}
+    Plugging in control we get following differential equations in matrix form
+    \begin{equation*}
+      \begin{bmatrix}
+        \dot{x} \\
+        \dot{p}
+      \end{bmatrix}=
+      \begin{bmatrix}
+        A & -BR_{uu}^{-1}B^{\top} \\[4pt]
+        -R_{xx} & -A^{\top}
+      \end{bmatrix}
+      \begin{bmatrix}
+        x \\
+        p
+      \end{bmatrix}
+    \end{equation*}
+    To solve the state and costate equations, guess a solution
+    \begin{equation*}
+      p=Px
+    \end{equation*}
+    Differentiate and simplify to get Riccati equation.
+    \begin{equation*}
+      \dot{P}=PA+A^{\top}P+R_{xx}-PBR_{u}^{-1}B^{\top}P
+    \end{equation*}
+
+    When we have infinite time horizon, $\dot{P}=0$.
+    We need to solve this equation to find $P$, and then use $p=Px$ with the $P$ we found to determine the control law $u$.
+    For scalar systems we can easily solve the Riccati equation by hand.
+    We can also compute the solution $P$ using the eigenvalues and eigenvectors of $\bar{H}$, although this approach doesn't always work.
+
+  \end{cookbook}
+
+  ~\\ \vspace{3in} % chktex 39
+
+  \begin{cookbook}
+
+    \textbf{Constrained Optimization with Pontryagin}
+
+    \begin{empheq}[]{alignat*=3}
+      &\text{Minimize}\quad &J&=h+\smallint_{t}^{t_{f}}gdt \\
+      &\text{subject to}&\dot{x}&=f \\
+      & & c(x,u,t)&\leq0
+    \end{empheq}
+
+    \begin{empheq}[box=\fbox]{alignat*=3}
+      &\mbox{\textbf{Hamiltonian:}} & \hspace{0.5in} \mathcal{H}&=g+p^{\top}f \\
+      &\mbox{\textbf{Necessary Conditions:}} & \dot{x}&=\mathcal{H}_{p}^{\top}=f \\
+      & & \dot{p}&=-\mathcal{H}_{x}^{\top} \\
+      & & u^{*}&=\arg\min_{u}\mathcal{H}
+    \end{empheq}
+
+    \begin{enumerate}
+      \item{Form Hamiltonian}
+      \item{Find $u^{*}$ as it depends on sign of other stuff}
+      \begin{itemize}
+        \item{Usually this stuff has $p$ in it, so have to find costate equation}
+      \end{itemize}
+      \item{Plug each option for $u^{*}$ into the state equations and integrate back to find expression for $x(t)$}
+      \begin{itemize}%[rightmargin=\dimexpr\linewidth-8cm-\leftmargin\relax]
+        \item{Will use initial conditions for constants of integration}
+        \item{Can see switching curve for each option by plugging in final condition and eliminating $t_{f}$}
+      \end{itemize}
+      \item{More notes:}
+      $h_{x}=p(t_{f})$
+    \end{enumerate}
+
+  \end{cookbook}
+
+  ~\\ % chktex 39
+
+  \begin{cookbook}
+
+  \textbf{Solving the HJB Equation}
+
+  \begin{empheq}[]{alignat*=3}
+    &\text{Minimize}\quad &J&=h+\smallint_{t}^{t_{f}}gdt \\
+    &\text{subject to}&\dot{x}&=f
+  \end{empheq}
+
+  Using dynamic programming in continuous time leads to the HJB equation.
+
+  \begin{empheq}[box=\fbox]{alignat*=3}
+    &\mbox{\textbf{Hamiltonian:}} & \hspace{0.5in} \mathcal{H}&=g+J_{x}^{*}f \\
+    &\mbox{\textbf{HJB Equation:}} & -J_{t}^{*}&=\min_{u}\mathcal{H} \\
+    &\mbox{\textbf{Boundary condition:}} & J^{*}(t_{f})&=h
+  \end{empheq}
+
+  \begin{enumerate}
+    \item{Write out Hamiltonian $\mathcal{H}$}
+    \item{Evaluate $\mathcal{H}_{u}=0$ and solve for $u^{*}$ in terms of $J_{x}^{*}$}
+    \begin{itemize}
+      \item{Can set $\mathcal{H}_{u}=0$ since control is not constrained}
+    \end{itemize}
+    \item{Substitute $u^{*}$ into HJB equation and simplify}
+    \item{Propose (guess) a solution form for $J^{*}=px^{2}$}
+    \item{Plug solution into HJB}
+    \item{Solve for $p(t)$, which should give $J_{x}^{*}$ and thus $u^{*}$}
+    \begin{itemize}
+      \item{Use boundary condition $J^{*}(t_{f})=h$}
+    \end{itemize}
+  \end{enumerate}
+
+  \end{cookbook}
+
+  ~\\ % chktex 39
+
+  For singular arc must have $\mathcal{H}_{u}=0$ and $\dot{\mathcal{H}}_{u}=0$.
+  Remember in Goddard problem we dot $\ddot{\mathcal{H}}=0$ to constrain $u$!
+
+  lec 18:
+  For min time problems if system is completely controllable by $B_{i}$ $u_{i}$ can have no singular arcs.
+  If not completely controllable $u_{i}$ \textit{must} have a singular interval.
+
+  For min time-fuel, if completely controllable by $B_{i}$ and $A$ nonsingular, there can be no singular intervals.
+
+  LQR vs KE
+  $P, Q; A, A^{\top}; B, C_{y}^{\top}; Q, R_{ww}; R, R_{vv}$
+
+  \clearpage
+
+  \section*{LQG Stuff}
+
+  \begin{empheq}[box=\fbox]{alignat*=3}
+    &\mbox{\textbf{Plant:}} & \hspace{0.5in} \dot{x}&=Ax+B_{u}u+B_{w}w \\
+    & & y&=Cx +v \\
+    &\mbox{\textbf{Estimator:}} & \dot{\hat{x}}&=A\hat{x}+B_{u}u+L(y-C\hat{x}) \\
+    &\mbox{\textbf{Error:}} & \dot{\tilde{x}}&=(A-LC)\tilde{x}+B_{w}w-Lv
+  \end{empheq}
+
+  $Q$ is the covariance matrix.
+  Consider the following
+  \begin{equation*}
+    \begin{split}
+      \dot{x}&=Ax+B_{w}w \\
+      E[\tilde{x}(t)\tilde{x}^{\top}(t)]&=Q(t) \\
+      \dot{Q}&=E[\dot{x}x^{\top}]+E[x\dot{x}^{\top}] \\
+      &=E[(Ax+B_{w}w)x^{\top}]+E[x(Ax+B_{w}w)^{\top}] \\
+      &=E[Axx^{\top}+B_{w}wx^{\top}]+E[xx^{\top}A^{\top}+w^{\top}B_{w}^{\top}] \\
+      &=AQ+QA^{\top}+B_{w}R_{ww}B_{w}^{\top}
+    \end{split}
+  \end{equation*}
+  This is the differential Lyapunov equation, which we substitute in for our terms in the estimation error equation and get:
+  \begin{equation*}
+    \dot{Q}=(A-LC)Q+Q(A-LC)^{\top}+B_{w}R_{ww}B_{w}^{\top}+LR_{vv}L^{\top}
+  \end{equation*}
+  Now the goal is:
+  \begin{empheq}[]{alignat*=3}
+    &\text{minimize}\quad &J&=E[\tilde{x}^{\top}(t_{f})P_{f}\tilde{x}(t_{f})] \\
+    &\text{subject to Differential Lyapunov equation}& &
+  \end{empheq}
+  We can express $J$ in terms of $Q$ as
+  \begin{equation*}
+    \begin{split}
+      J&=\text{tr}E[P_{f}\tilde{x}(t_{f})\tilde{x}^{\top}(t_{f})] \\
+      &=\text{tr}P_{f}Q(t_{f})
+    \end{split}
+  \end{equation*}
+  So make $Q(t)$ the state $L$ the control and its like an optimal control problem.
+  Define Hamiltonian
+
+  \begin{equation*}
+    \mathcal{H}=\text{tr}[P\{(A-LC)Q+Q(A-LC)^{\top}+B_{w}R_{ww}B_{w}^{\top}+LR_{vv}L^{\top}\}]
+  \end{equation*}
+
+  Optimal control satisfies
+
+  \begin{equation*}
+    \begin{split}
+      \mathcal{H}_{L}&=0 \\
+      \mathcal{H}_{L}&=-PQC^{\top}+PLR_{vv} \\
+      L&=QC^{\top}R_{vv}^{-1}
+    \end{split}
+  \end{equation*}
+  Plugging $L$ back into differential Lyapunov equation, we get estimation Riccati equation.
+  \begin{equation*}
+    \dot{Q}=AQ+QA^{\top}+B_{w}R_{ww}B_{w}^{\top}-QC^{\top}R_{vv}^{-1}CQ
+  \end{equation*}
+
+  \section*{More Notes}
+
+  when $\rho\rightarrow\infty$ (expensive) closed-loop poles are stable OL poles and reflection of unstable OL poles.
+  $\rho\rightarrow0$ control is cheap, so CL poles go to OL zeros (stable ones plus reflection of unstable) and remaining go to infinity.
+  When control is cheap CL poles go to zeros and we minimize $J$ by making things unobservable.
+  Nonminimum phase zeros place fundamental limitation on cost.
+
+  If $g$ and $h$ not functions of time, $\mathcal{H}$ is constant along optimal trajectory.
+
+  Singular arcs $\mathcal{H}_{u}=0$ and $\dot{\mathcal{H}}_{u}=0$
+
+  No cost along a singular arc.
+
+  To find optimal control for a continuous time system, can use Hamiltonian like always, write state and costate equations and put in matrix form.
+  If it is infinite time, can solve for the the costate equation by $P=V_{21}V_{11}^{-1}x$.
+  (see lec 11--3).
+
+  \begin{equation*}
+    \begin{bmatrix}
+      a & b \\
+      c & d
+    \end{bmatrix}^{-1}=
+    \begin{bmatrix}
+      d & -b \\
+      -c & a
+    \end{bmatrix}/\det
+  \end{equation*}
+
+  \begin{equation*}
+    \frac{d}{dX}\text{tr}[AXB]=A^{\top}B^{\top}
+  \end{equation*}
+
+  If $A$ is invertible, then
+  \begin{equation*}
+    \det
+    \begin{bmatrix}
+      A & B \\
+      C & D
+    \end{bmatrix}=
+    \det(A)\det(D-CA^{-1}B)
+  \end{equation*}
+
+  $A$ and $B$ square $\det(AB)=\text{set}(A)\text{set}(B)$.
+  For any matrices $C$ and $D$ such that $CD$ is square, $\det(I+CD)=\det(I+DC)$.
+
+  Symmetric root locus
+
+  \begin{equation*}
+    \bar{\mathcal{H}}=
+    \begin{bmatrix}
+      A & -BR_{uu}^{-1}B^{\top} \\[4pt]
+      -R_{xx} & -A^{\top}
+    \end{bmatrix}
+  \end{equation*}
+
+  \begin{equation*}
+    \det(sI-\bar{\mathcal{H}})=(-1)^{n}\{D(s)D(-s)+\frac{R_{zz}}{R_{uu}}N(s)N(-s)\}=0
+  \end{equation*}
+  where $\frac{R_{zz}}{R_{uu}}=\frac{1}{\rho}$, $G_{zu}(s)=C_{z}(sI-A)^{-1}B_{u}$ and $D(s)=\det(sI-A)$.
+  Use the 180 degree root locus for $n-m$ even, $0$ degree root locus for $n-m$ odd.
+  $180$ degree is the ``normal'' root locus.
+
+  To plot SRL given $(A,B,C_{z})$.
+  Write TF from $u$ to $z$.
+  Plot all poles and zeros.
+  Reflect all poles and zeros across imaginary axis.
+  Check $n-m$ and draw asymptotes.
+
+  \subsection*{LQR Margins}
+
+  Loop transfer function from $u$ to $-u$
+  \begin{equation*}
+    L(s)=K(sI_a)^{-1}
+  \end{equation*}
+  \textbf{Kalman frequency domain equality}
+  \begin{equation*}
+    [I+L(-s)]^{\top}[I+L(s)]=I+\frac{1}{\rho}G_{zu}^{\top}(-s)G_{zu}(s)
+  \end{equation*}
+
+  lec 14:
+  For free final time problems $h_{t}+H(t_{f})=0$
+
+  lec 15:
+  Augmenting Hamiltonian with point constraint.
+  $J_{a}=h+\smallint\mathcal{H}-p^{\top}f dt+\pi^{\top}N$ we find $p^{\top}(t_{1}^{+})=p^{\top}(t_{1}^{-})-\pi^{\top}N_{x}(t_{1})$ and $\mathcal{H}(t_{1}^{+})=\mathcal{H}(t_{1}^{-})+\pi^{\top}N_{t}(t_{1})$.
+
+  lec 17:
+  WHEN $t_{f}$ AND $x(t_{f})$ ARE FREE TRANSVERSALITY IS:\@
+  \begin{equation*}
+    h_{t_{f}}(t_{f})+\mathcal{H}(t_{f})=0
+  \end{equation*}
+  (\textit{this might be true even when $x(t_{f})$ is fixed})
+
+  \begin{cookbook}
+
+    \textbf{Constrained Optimization with Augmented Hamiltonian}
+
+    \begin{empheq}[]{alignat*=3}
+      &\text{Minimize}\quad &J&=h+\smallint_{t_{0}}^{t_{f}}gdt \\
+      &\text{subject to}&\dot{x}&=f \\
+      & & c(x,u,t)&\leq0
+    \end{empheq}
+
+    \begin{empheq}[box=\fbox]{alignat*=3}
+      &\mbox{\textbf{Hamiltonian:}} & \hspace{0.5in} \mathcal{H}&=g+p^{\top}f \\
+      &\mbox{\textbf{Aug. Hamiltonian:}} & \mathcal{H}_{a}&=\mathcal{H}+\nu^{\top}c \\
+      &\mbox{\textbf{Necessary Conditions:}} & \dot{x}&=f \\
+      & & \dot{p}&=-(\mathcal{H}_{a})_{x}^{\top} \\
+      & & (\mathcal{H}_{a})_{u}&=0 \\
+      & & \nu_{i}&\geq0 \quad\text{if } c_{i}=0 \quad\text{(active)} \\
+      & & \nu_{i}&=0 \quad\text{if } c_{i}\leq0 \quad\text{(inactive)}
+    \end{empheq}
+
+  \end{cookbook}
+
+  \clearpage
+  \section*{General Stuff}
+
+  Taylor series expansion
+  \begin{equation*}
+    f(x+\Delta x)=f(x)+g^{\top}(x)\Delta x+\frac{1}{2}\Delta x^{\top}H(x)\Delta x+\dots
+  \end{equation*}
+  where $g(x)=\nabla f(x)$ is the gradient and $H(x)$ is the Hessian
+  \begin{align*}
+    g(x)&=
+    \begin{bmatrix}
+      \frac{\partial{}f}{\partial{}x_{1}} &
+      \frac{\partial{}f}{\partial{}x_{2}} &
+      \dots &
+      \frac{\partial{}f}{\partial{}x_{n}}
+    \end{bmatrix}^{\top} \\
+    H(x)&=
+    \begin{bmatrix}
+      \frac{\partial^{2}f}{\partial{}x_{1}^{2}} & \cdots & \frac{\partial^{2}f}{\partial{}x_{1}x_{n}} \\
+      \vdots & & \vdots \\
+      \frac{\partial^{2}f}{\partial{}x_{n}x_{1}} & \cdots & \frac{\partial^{2}f}{\partial{}x_{n}^{2}} 
+    \end{bmatrix}
+  \end{align*}
+  \textbf{Stationary point} $g(x^{*})=0$.
+  If $H(x^{*})>(\geq)\;0$ then $x^{*}$ is a \textbf{strong (weak) minimum}.
+
+  \subsection*{Newton's Method}
+
+  Guess a stationary point $x_{k}$.
+  Then can write actual stationary point as $x=x_{k}+\Delta x_{k}$ and we have $f(x)=f(x_{k}+\Delta x_{k})\approx f(x_{k})+g(x_{k})^{\top}\Delta x_{k}+\frac{1}{2}\Delta x_{k}^{\top}H(x_{k})\Delta x_{k}$.
+  and we have $\nabla f(x)\approx g(x_{k})+H(x_{k})\Delta x_{k}$.
+  And we want this to be zero so set it to zero and get $x_{k+1}=x_{k}-H_{k}^{-1}g_{k}$.
+
+  \subsection*{Convergence Rates}
+
+  \section*{Constrained Minimization}
+
+  \subsection*{Equality Constraints}
+
+  Given a problem in the form
+  \begin{align*}
+    &\text{optimize }\quad f(x,y) \\
+    &\text{subject to }c(x,y)=0
+  \end{align*}
+  the following approach will find stationary points which satisfy the constraint.
+  \begin{enumerate}
+    \item{\textbf{Form Lagrangian}}
+    \begin{empheq}[box=\fbox]{alignat*=3}
+      &\mbox{\textbf{Lagrangian:}} &\hspace{0.5in} L(x,y,\lambda)=f(x,y)+\lambda^{\top}c(x,y)
+    \end{empheq}
+    \item{\textbf{Form necessary conditions}}
+    \begin{equation*}
+      \frac{\partial{}L}{\partial{}x}=0
+      \qquad
+      \frac{\partial{}L}{\partial{}y}=0
+      \qquad
+      \frac{\partial{}L}{\partial{}\lambda}=0
+    \end{equation*}
+    \item{\textbf{Solve} and find the solution (if there are more than one) that corresponds to either min or max}
+  \end{enumerate}
+
+  \subsection*{Inequality Constraints}
+
+  Given a problem in the form
+  \begin{empheq}[]{alignat*=3}
+    &\text{optimize }\quad &f(x,y)& \\
+    &\text{subject to }&c_{1}(x,y)&\leq0 \\
+    & &c_{2}(x,y)&\geq0
+  \end{empheq}
+  Approach is similar to equality constraints.
+  Only this time, we have different cases, $\lambda_{i}=0$ meaning the constraint is inactive, or $\lambda_{i}\neq0$ means the constraint is active.
+  \begin{enumerate}
+    \item{\textbf{Rewrite the inequality constraints} so they are all in the form \textit{less than zero}}
+    \begin{equation*}
+      c_{i}(x,y)\leq0 \\
+    \end{equation*}
+    \item{\textbf{Form Lagrangian} as: $L(x,y,\lambda)=f(x,y)+\lambda^{\top}c(x,y)$}
+    \item{\textbf{Form necessary conditions} (\textit{note change from before})}
+    \begin{equation*}
+      \frac{\partial{}L}{\partial{}x}=0
+      \qquad
+      \frac{\partial{}L}{\partial{}y}=0
+      \qquad
+      \lambda_{i}\frac{\partial{}L}{\partial{}\lambda_{i}}=0
+    \end{equation*}
+    \item{\textbf{Consider different cases} whether each constraint is active/inactive}
+    \begin{enumerate}
+      \item{\textbf{Both constraints inactive $\lambda_{1}=\lambda_{2}=0$}. Plug this into equations, solve, verify the constraints are satisfied.}
+      \item{\textbf{Inactive: $\lambda_{1}=0$, active: $\lambda_{2}\neq0$.} Same as the above.}
+      \item{\textbf{Active: $\lambda_{1}\neq0$, inactive: $\lambda_{2}=0$.} Same as the above.}
+      \item{\textbf{Both active: $\lambda_{1}\neq0$, and $\lambda_{2}\neq0$.} No reduction of the equations that we have to solve, still have in this case solve four equations four unknowns.}
+    \end{enumerate}
+    \item{Look at each case above and evaluate $f(x,y)$ at each stationary point which satisfies the constraints to find the min/max.} \\
+  \end{enumerate}
+  \vspace{-0.2in}
+  \textit{Note: according to KKT conditions, all active inequality constraints must have $\lambda_{i}\geq0$, if not it is not a valid solution}
+
+  \subsection*{Constraint Sensitivity}
+
+  To find the sensitivity of a cost to a constraint, write the constraint, say $c_{1}(x,y)\leq0$ as $\bar{c}_{1}(x,y)\leq C_{1}$.
+  Then we calculate the change in cost as follows, where say the constraint $C_{1}$ is changed to $C_{1}+\Delta C_{1}$.
+  \begin{equation*}
+    \Delta f=-\lambda_{1}\Delta C_{1}
+  \end{equation*}
+
+  \subsection*{Barrier Functions}
+
+  Augmented Lagrangians.
+
+  \section*{Adjoint Methods}
+
+  Computer program $y=f(x)$ where $y$ is a scalar cost and $x$ is a vector.
+  We want to evaluate the gradient, $g(x)=\frac{\partial{}y}{\partial{}x}$.
+  If in the computer program we calculate $y$ by operating on $x$ throughout the code as $z_{1}=F_{1}(x_{1})$ then $x_{2}=F_{2}(z_{1})$ and so on we have $y=F_{n}(F_{n-1}(F_{n-2}(\dots x \dots )))$ and so to get the gradient it is lots of chain rules.
+  $\frac{\partial{}y}{\partial{}x}=\underbrace{\frac{\partial{}F_{n}}{\partial{}z_{n-1}}}_{1\times m}\underbrace{\frac{\partial{}F_{n-1}}{\partial{}z_{n-2}}}_{m\times m}\dots\underbrace{\frac{\partial{}F_{1}}{\partial{}x}}_{m\times n}$.
+  Depending on how we group these multiplications is either forward or reverse accumulation.
+  Reverse is better because we the number of variables to do each operation is less $(1\times m)$ instead of $(m\times n)$ with forward.
+
+  \subsection*{Example 4--13}
+
+  $y=f(x_{1},x_{2})=\sin x_{1}+x_{1}x_{2}$.
+  Forward code: (1) $t_{1}=\sin x_{1}$, (2) $t_{2}=x_{1}x_{2}$, (3) $y=t_{1}t_{2}$.
+  Reverse code: form $z_{n-1}=F_{n}(z_{n-1})$.
+  (3) $z_{2}=[\;t_{1}\;t_{2}\;y\;]^{\top}$, $F= [\;t_{1}\;t_{2}\;t_{1}t_{2}\;]^{\top}$.
+  Evaluate $T_{3}=\frac{\partial{}F_{3}}{\partial{}z_{2}}$ where $F$ is column $z$ is row in making this derivative matrix.
+  Then $[\;t_{1}\;t_{2}\;y\;]_{b}=[\;t_{1}\;t_{2}\;y\;]_{b}T_{3}$.
+  Repeat this process for rest of code.
+
+  \section*{Dynamic Programming}
+
+  \subsection*{Discrete Time}
+
+  The problem statement is
+  \begin{empheq}[]{alignat*=3}
+    &\text{Minimize}\quad &J&=h(x_{N},N)+\sum_{k=0}^{N-1}g_{k}(x_{k},u_{k}) \\
+    &\text{subject to}&x_{k+1}&=f_{k}(x_{k},u_{k})
+  \end{empheq}
+  with $x_{0}$ given and $u\in\Omega$ feasible controls.
+  We break this up by defining the \textbf{cost-to-go}, which is the cost to get to any point $k$ to the end as
+  \begin{equation*}
+    V_{k}(x)=\min_{u_{i}}\biggr\{ h(x_{N},N)+\sum_{i=k}^{N-1}g_{i}(x_{i},u_{i})\biggr\}
+  \end{equation*}
+  We can break the cost-to-go up and get \textbf{the basic recursion of dynamic programming}
+  \begin{equation*}
+    \boxed{%
+    V_{k}(x)=\min_{u_{k}}\biggr\{ g_{k}(x_{k},k)+V_{k+1}\bigr(f(x,u_{k})\bigr)\biggr\}}
+  \end{equation*}
+
+  \subsection*{Discrete LQR}
+
+  Analytical solutions don't exists for many DP problems, but this is not the case for LQR.\@
+  \begin{empheq}[]{alignat*=3}
+    &\text{Minimize}\quad &J&=\underbrace{\frac{1}{2}x_{N}^{\top}H_{N}x_{N}}_{h(x_{N})}+\sum_{k=0}^{N-1}\underbrace{\frac{1}{2}x_{k}^{\top}Q_{k}x_{k}+u_{k}^{\top}R_{k}u_{k}}_{g_{k}(x_{k},u_{k})} \\
+    &\text{subject to}&x_{k+1}&=A_{k}x_{k}+B_{k}u_{k}
+  \end{empheq}
+  where $H>0$, $Q\geq0$, $R>0$.
+  To solve use the basic recursion of dynamic programming.
+  \begin{enumerate}
+    \item{Evaluate $V_{N-1}$ using given $h(x_{N})$ and $g_{k}(x_{k},u_{k})$.}
+    \item{Plug in dynamics where $x_{N}=A_{N-1}x_{N-1}+B_{N-1}u_{N-1}$.}
+    \item{We want to find the control to minimize $V_{N-1}$, so differentiate the right hand side to get the following, which we will transpose and then set to zero}
+    \begin{equation*}
+      \frac{\partial{}V_{N-1}}{\partial{}u_{N-1}}=
+      u_{N-1}^{\top}R_{N-1}+\bigr\{Ax+Bu\bigr\}_{N-1}^{\top}HB_{N-1}=0
+    \end{equation*}
+    so doing algebra we get
+    \begin{equation*}
+      u_{N-1}^{*}=-\underbrace{\bigr(R_{N-1}+B_{N-1}^{\top}HB_{N-1}\bigr)^{-1}B_{N-1}^{\top}HA_{N-1}}_{F_{N-1}}x_{N-1}
+    \end{equation*}
+    \item{Now plug optimal control $u_{N-1}^{*}$ into $V_{N-1}$ to get}
+    \begin{equation*}
+      \fontsize{8pt}{8pt}\selectfont
+      V_{N-1}=\frac{1}{2}x_{N-1}\underbrace{\bigr\{Q+F^{\top}RF+(A-BF)^{\top}H(A-BF)\bigr\}_{N-1}}_{P_{N-1}}x_{N-1}
+    \end{equation*}
+    \item{Looking at the above expression, we now assume a solution $V_{k}(x_{k})=\frac{1}{2}x_{k}^{\top}P_{k}x_{k}$ and then find $V_{k-1}(x_{k-1})=\frac{1}{2}x_{k-1}^{\top}P_{k-1}x_{k-1}$. Note that $P_{N}=H$.}
+    \begin{align*}
+      P_{k-1}=&Q_{k-1}+F_{k-1}^{\top}R_{k-1}F_{k-1} \\
+      &+\bigr\{A_{k-1}-B_{k-1}F_{k-1}\bigr\}^{\top}P_{k}\bigr\{A_{k-1}-B_{k-1}F_{k-1}\bigr\} \\
+      F_{k-1}=&\bigr(R_{k-1}+B_{k-1}^{\top}P_{k}B_{k-1}\bigr)^{-1}B_{k-1}^{\top}P_{k}A_{k-1}
+    \end{align*}
+    \item{Control is $u_{k}=-F_{k}x_{k}$. $P_{k}$ and $F_{k}$ are independent of the state and can be computed off-line. If we plug the expression for $F_{k-1}$ into $P_{k-1}$ we get discrete time Riccati equation.}
+    \item{If the system is LTI, $A$, $B$, $Q$, $R$ are constants and so replace $P$ with $P_{ss}$ and solve Algebraic Riccati Equation.}
+    \begin{equation*}
+      P_{ss}=Q+A^{\top}\bigr\{P_{ss}-P_{ss}B(R+B^{\top}P_{ss}B)^{-1}B^{\top}P_{ss}\bigr\}A
+    \end{equation*}
+  \end{enumerate}
+
+  \subsection*{Continuous Time}
+
+  The problem statement is
+  \begin{empheq}[]{alignat*=3}
+    &\text{Minimize}\quad &J&=h(x(t_{f}),t_{f})+\smallint_{t}^{t_{f}}g(x(t),u(t),t)dt \\
+    &\text{subject to}&\dot{x}&=f(x,u,t)
+  \end{empheq}
+  Instead of breaking the sum up in the cost to go, we break the integral up from $t$ to $t+\Delta t$ and $t+\Delta t$ to $t_{f}$.
+  We get
+  \begingroup\makeatletter\def\f@size{7}\check@mathfonts{}
+  \begin{equation*}
+    J^{*}(x(t),t)=\min_{\shortstack{$u$ \\ \fontsize{4pt}{4pt}\selectfont $t\leq\tau\leq{}t+\Delta{}t$}}
+    \biggr\{\smallint_{t}^{t+\Delta t}g(x,u,\tau)d\tau+J^{*}(x(t+\Delta t),t+\Delta t)\biggr\}
+  \end{equation*}
+  \endgroup
+  \begin{enumerate}
+    \item{Represent the $J^{*}(x(t+\Delta t),t+\Delta t)$ term using Taylor series.}
+    \begingroup\makeatletter\def\f@size{7}\check@mathfonts{}
+    \begin{equation*}
+      J^{*}(x(t+\Delta t),t+\Delta t)\approx
+      J^{*}(x(t),t)+J_{t}^{*}(x(t),t)\Delta t+J_{x}^{*}(x(t),t)\frac{dx}{dt}\Delta t
+    \end{equation*}
+    \endgroup
+    \item{Must ensure first order terms match.}
+    \begin{equation*}
+      -J_{t}^{*}(x,t)=\min_{u}\mathcal{H}
+    \end{equation*}
+    where
+    \begin{equation*}
+      \mathcal{H}=g(x,u,t)+J_{x}^{*}(x,t)f(x,u,t)
+    \end{equation*}
+  \end{enumerate}
+  To solve CT LQR guess $J^{*}=\frac{1}{2}x^{\top}(t)P(t)x(t)$, form Hamiltonian, then minimize $\mathcal{H}$ wrt to $u$.
+  So take derivative and get $u^{*}(t)=-R_{uu}^{-1}(t)B^{\top}(t)P(t)x(t)$.
+  Plug this control back into $H$ and then to satisfy HJB we must have $-J_{t}^{*}=-\frac{1}{2}x^{\top}(t)\dot{P}(t)x(t)$, giving differential Riccati equation.
+
+  \section*{Calculus of Variations}
+
+  \subsection*{Derivation of Euler-Lagrange Equation}
+
+  We find increment defined as $\Delta J=J(x+\delta{}x)-J(x)$.
+  Then simplify this increment to first order to get the variation, which by the FToCOV says $\delta{}J(x^{*}(t),\delta{}x(t))=0$.
+  Start with cost
+  \begin{equation*}
+    J(x)=\smallint_{t_{0}}^{t_{f}}g(x,\dot{x},t)dt
+  \end{equation*}
+  Evaluate perturbed cost
+  \begin{equation*}
+    J(x+\delta{}x)=
+    \smallint_{t_{0}+\delta{}t_{0}}^{t_{f}+\delta{}t_{f}}g(x+\delta{}x,\dot{x}+\delta\dot{x},t)dt
+  \end{equation*}
+  \begin{enumerate}
+    \item{Split $J(x+\delta{}x)$ integral into three pieces}
+    \item{Approximate the integrals using $\smallint_{t}^{t+\delta{}t}f(\tau)d\tau=f(t)\delta{}t$}
+    \item{Approximate integrand using Taylor series}
+    \begin{equation*}
+      g(x+\delta{}x,\dot{x}+\delta\dot{x},t)\approx g(x,\dot{x},t)+\frac{\partial{}g}{\partial{}x}\delta{}x+\frac{\partial{}g}{\partial\dot{x}}\delta\dot{x}
+    \end{equation*}
+    \item{Neglect terms higher than first order, and then subtract $\delta{}J=J(x+\delta{}x)-J(x)$ and simplify}
+    \item{Integrate by parts}
+    \begin{equation*}
+      u=\frac{\partial{}g_{a}}{\partial\dot{x}}
+      \qquad
+      du=\frac{d}{dt}\frac{\partial{}g_{a}}{\partial\dot{x}}
+      \qquad
+      dv=\delta\dot{x}dt
+      \qquad
+      v=\delta{}x
+    \end{equation*}
+    \item{Simplify using following at $t_{0}$ and $t_{f}$}
+    \begin{equation*}
+      \delta{}x(t_{0})\approx\delta{}x_{0}-\dot{x}(t_{0})\delta{}t_{0}
+    \end{equation*}
+  \end{enumerate}
+  \begin{empheq}[box=\fbox]{alignat*=3}
+  \delta{}J(x,\delta{}x)&=
+  \int_{t_{0}}^{t_{f}}\biggr\{\frac{\partial{}g}{\partial{}x}-\frac{d}{dt}\frac{\partial{}g}{\partial\dot{x}}\biggr\}\delta{}xdt
+  +\biggr(g(t_{f})-\frac{\partial{}g}{\partial\dot{x}}\biggr|_{t_{f}}\dot{x}(t_{f})\biggr)\delta{}t_{f} \\
+  &-\biggr(g(t_{0})-\frac{\partial{}g}{\partial\dot{x}}\biggr|_{t_{0}}\dot{x}(t_{0})\biggr)\delta{}t_{0}
+  +\frac{\partial{}g}{\partial\dot{x}}\biggr|_{t_{f}}\delta{}x_{f}
+  -\frac{\partial{}g}{\partial\dot{x}}\biggr|_{t_{0}}\delta{}x_{0}
+  \end{empheq}
+  By setting this to zero for arbitrary $\delta{}x$, and by applying constraints e.g. $t_{0}$ fixed, $x(t_{f})$ free, we get the necessary conditions.
+
+  \subsubsection*{General Terminal Conditions}
+
+  If there are general terminal conditions $m(x(t_{f}),t_{f})=0$ augment cost with them using Lagrange multiplier $\nu$.
+  If cost is
+  \begin{equation*}
+    J(x)=h(x(t_{f}),t_{f})+\int_{t_{0}}^{t_{f}}g(x,\dot{x},t)dt
+  \end{equation*}
+  augment as
+  \begin{equation*}
+    J_{a}(x)=\underbrace{h(x(t_{f}),t_{f})+\nu^{\top}m(x(t_{f}),t_{f})}_{w(x(t_{f}),t_{f})}+\smallint_{t_{0}}^{t_{f}}g(x,\dot{x},t)dt
+  \end{equation*}
+  Do same thing as before to get necessary conditions: $g_{x}-\frac{d}{dt}g_{\dot{x}}=0$, $(w_{x}+g_{\dot{x}})_{t_{f}}=0$, $(w_{t_{f}}+g-g_{\dot{x}}\dot{x})_{t_{f}}=0$, and $m(x(t_{f}),t_{f})=0$.
+
+  \subsection*{Variational Approach to Optimal Control}
+
+  Augment cost using Lagrange multiplier $p(t)$ as:
+  \begin{equation*}
+    J_{a}=h(x(t_{f}),t_{f})+\smallint_{t_{0}}^{t_{f}}\bigr\{g(x,u,t)+p^{\top}\bigr(f(x,u,t)-\dot{x}\bigr)\bigr\}dt
+  \end{equation*}
+  \begin{align*}
+    \mathcal{H}(x,u,p,t)&=g(x,u,t)+p^{\top}f(x,u,t) \\
+    w(x(t_{f}),\nu,t_{f})&=h(x(t_{f}),t_{f})+\nu^{\top}m(x(t_{f}),t_{f})
+  \end{align*}
+  \begin{empheq}[box=\fbox]{alignat*=3}
+    &\mbox{\textbf{Necessary Conditions:}} &\hspace{0.5in} \dot{x}&=\mathcal{H}_{p}^{\top}=f(x,u,t) \\
+    & & \dot{p}&=-\mathcal{H}_{x}^{\top} \\
+    & & \mathcal{H}_{u}&=0
+  \end{empheq}
+  Boundary conditions: if $t_{f}$ is not fixed use $H(t_{f})+w_{t_{f}}(t_{f})=0$, otherwise don't use it.
+  But use these regardless: $m(x(t_{f}),t_{f})=0$, $x(t_{0})$, $t_{0}$ given, $p(t_{f})=\bigr(\frac{\partial{}w}{\partial{}x}\bigr|_{t_{f}}\bigr)^{\top}$
+
+\end{document}
